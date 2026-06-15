@@ -11,7 +11,9 @@ from novel_translate.api.deps import get_session
 from novel_translate.api.main import app
 from novel_translate.core.config import get_settings
 from novel_translate.db.base import Base
-from novel_translate.modules.projects import models as _models  # noqa: F401  # register tables on Base.metadata
+from novel_translate.modules.glossary import models as _glossary_models  # noqa: F401  # register tables
+from novel_translate.modules.memory import models as _memory_models  # noqa: F401  # register tables
+from novel_translate.modules.projects import models as _project_models  # noqa: F401  # register tables
 
 TEST_DB_NAME = "novel_translate_test"
 
@@ -55,9 +57,13 @@ async def db_engine() -> AsyncIterator[AsyncEngine]:
     await _ensure_test_database()
     engine = create_async_engine(_test_database_url(), poolclass=NullPool)
     async with engine.begin() as connection:
+        await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await connection.run_sync(Base.metadata.create_all)
         await connection.execute(
-            text("TRUNCATE TABLE segments, chapters, projects RESTART IDENTITY CASCADE")
+            text(
+                "TRUNCATE TABLE segments, chapters, glossary_terms, memory_snapshots, projects "
+                "RESTART IDENTITY CASCADE"
+            )
         )
     try:
         yield engine
