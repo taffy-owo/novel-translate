@@ -34,6 +34,9 @@ async def translate_segment(ctx: dict[str, Any], segment_id: str) -> None:
 
         try:
             adapter = get_provider(provider_kind)
+            rate_limiter = ctx.get("rate_limiter")
+            if rate_limiter is not None:
+                await rate_limiter.acquire()
             result = await adapter.translate(request)
         except Exception as exc:
             segment.status = SegmentTranslationStatus.error

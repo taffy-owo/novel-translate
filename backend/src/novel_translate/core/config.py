@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     openai_model: str | None = None
     anthropic_api_key: str | None = None
     anthropic_model: str | None = "claude-sonnet-4-6"
+    provider_rpm: int = 20  # 翻译模型每分钟请求上限（worker 限流，遵守供应商速率）
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
