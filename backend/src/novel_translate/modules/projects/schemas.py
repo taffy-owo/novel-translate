@@ -36,6 +36,7 @@ class SegmentRead(BaseModel):
     source_text: str
     target_text: str | None
     status: SegmentTranslationStatus
+    error: str | None
 
     model_config = ConfigDict(from_attributes=True)
 

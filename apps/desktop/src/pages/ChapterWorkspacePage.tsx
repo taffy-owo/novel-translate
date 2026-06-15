@@ -95,6 +95,9 @@ function SegmentEditor({ chapterId, segment }: { chapterId: string; segment: Seg
           <StatusBadge status={segment.status} />
         </div>
         <p className="whitespace-pre-wrap text-sm leading-7 text-ink-900">{segment.source_text}</p>
+        {segment.status === "error" && segment.error ? (
+          <p className="mt-2 text-xs text-red-700">翻译失败：{segment.error}</p>
+        ) : null}
       </div>
       <div className="flex min-h-[180px] flex-col p-4">
         <textarea

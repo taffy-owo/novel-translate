@@ -22,6 +22,7 @@ export type Segment = {
   source_text: string;
   target_text: string | null;
   status: SegmentStatus;
+  error: string | null;
 };
 
 export type Chapter = {
