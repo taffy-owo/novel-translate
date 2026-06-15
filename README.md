@@ -22,4 +22,8 @@ docs/              规格与计划
 
 ## 快速开始
 
-见 `docs/plan.md`「验证」一节（docker compose 起依赖 → uv 起后端与 worker → pnpm 起桌面端）。
+**Windows 一键启动**：先打开 Docker Desktop，然后双击仓库根目录的 `start.bat` —— 它会依次拉起 postgres/redis/minio、应用数据库迁移、在独立窗口启动后端 API 与 worker，并打开桌面端（首次会编译 Rust，窗口需等 1–2 分钟）。停止用 `stop.bat`。
+
+翻译模型在 `backend/.env` 配置（`OPENAI_BASE_URL` / `OPENAI_API_KEY` / `OPENAI_MODEL`，OpenAI 兼容接口）；每分钟请求上限由 `PROVIDER_RPM`（默认 20）限流。worker 经本地代理访问网关的设置见 `start.bat`。
+
+手动启动步骤（或非 Windows）见 `docs/plan.md`「验证」一节。
