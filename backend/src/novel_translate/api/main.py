@@ -1,6 +1,6 @@
 from fastapi import APIRouter, FastAPI
 
-from novel_translate.api.v1 import chapters, projects, segments
+from novel_translate.api.v1 import chapters, glossary, projects, segments
 
 app = FastAPI(title="novel-translate")
 
@@ -8,6 +8,7 @@ api_v1_router = APIRouter(prefix="/api/v1")
 api_v1_router.include_router(projects.router)
 api_v1_router.include_router(chapters.router)
 api_v1_router.include_router(segments.router)
+api_v1_router.include_router(glossary.router)
 app.include_router(api_v1_router)
 
 
