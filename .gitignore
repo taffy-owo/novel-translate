@@ -1,0 +1,43 @@
+# Node
+node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Rust / Tauri
+target/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Local data volumes
+data/
+volumes/
+postgres-data/
+redis-data/
+minio-data/
+infra/postgres/data/
+infra/redis/data/
+infra/minio/data/
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
