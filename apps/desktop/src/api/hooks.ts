@@ -3,10 +3,13 @@ import { requestJson, requestText } from "./client";
 import type {
   Chapter,
   ChapterTranslationReceipt,
+  GlossaryTerm,
+  GlossaryTermDraft,
   Project,
   ProjectDraft,
   Segment,
   SegmentTranslationDraft,
+  TermStatus,
   TxtChapterDraft
 } from "./types";
 import { useChapterCatalogueStore } from "../stores/chapterCatalogue";
@@ -134,4 +137,61 @@ export function useUpdateSegment() {
 
 export function exportChapter(chapterId: string): Promise<string> {
   return requestText(`/chapters/${chapterId}/export?format=txt`);
+}
+
+const glossaryQueryKey = (projectId: string) => ["glossary", projectId] as const;
+
+export function useGlossary(projectId: string | undefined, termStatus?: TermStatus) {
+  return useQuery({
+    queryKey: projectId === undefined ? ["glossary"] : [...glossaryQueryKey(projectId), termStatus ?? "all"],
+    queryFn: () =>
+      requestJson<GlossaryTerm[]>(
+        `/projects/${projectId}/glossary${termStatus ? `?status=${termStatus}` : ""}`
+      ),
+    enabled: projectId !== undefined
+  });
+}
+
+function useGlossaryMutation<TArgs, TData>(
+  projectId: string | undefined,
+  mutationFn: (args: TArgs) => Promise<TData>
+) {
+  const queryClient = useQueryClient();
+  return useMutation<TData, Error, TArgs>({
+    mutationFn,
+    onSuccess: () => {
+      if (projectId !== undefined) {
+        void queryClient.invalidateQueries({ queryKey: glossaryQueryKey(projectId) });
+      }
+    }
+  });
+}
+
+export function useCreateTerm(projectId: string | undefined) {
+  return useGlossaryMutation(projectId, (termDraft: GlossaryTermDraft) =>
+    requestJson<GlossaryTerm>(`/projects/${projectId}/glossary`, { method: "POST", body: termDraft })
+  );
+}
+
+export function useExtractTerms(projectId: string | undefined) {
+  return useGlossaryMutation(projectId, () =>
+    requestJson<GlossaryTerm[]>(`/projects/${projectId}/glossary/extract`, { method: "POST" })
+  );
+}
+
+export function useApproveTerm(projectId: string | undefined) {
+  return useGlossaryMutation(projectId, (termId: string) =>
+    requestJson<GlossaryTerm>(`/glossary/${termId}/approve`, { method: "POST" })
+  );
+}
+
+export function useUpdateTerm(projectId: string | undefined) {
+  return useGlossaryMutation(
+    projectId,
+    (vars: { termId: string; target: string }) =>
+      requestJson<GlossaryTerm>(`/glossary/${vars.termId}`, {
+        method: "PUT",
+        body: { target: vars.target }
+      })
+  );
 }

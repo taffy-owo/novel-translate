@@ -81,14 +81,22 @@ export function ProjectDetailPage() {
             {project.source_lang} → {project.target_lang}
           </div>
         </div>
-        <button
-          className="h-10 rounded-md bg-ink-900 px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-stone-400"
-          type="button"
-          onClick={importSelectedTextFile}
-          disabled={isPickingTextFile || importTxtChapter.isPending}
-        >
-          导入TXT
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to={`/projects/${projectId}/glossary`}
+            className="flex h-10 items-center rounded-md border border-stone-300 bg-white px-4 text-sm font-medium transition hover:bg-stone-50"
+          >
+            术语表
+          </Link>
+          <button
+            className="h-10 rounded-md bg-ink-900 px-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-stone-400"
+            type="button"
+            onClick={importSelectedTextFile}
+            disabled={isPickingTextFile || importTxtChapter.isPending}
+          >
+            导入TXT
+          </button>
+        </div>
       </div>
 
       {(importMessage || importFailureMessage) && (

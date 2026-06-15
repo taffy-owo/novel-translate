@@ -48,3 +48,25 @@ export type ChapterTranslationReceipt = {
 export type SegmentTranslationDraft = {
   target_text: string | null;
 };
+
+export type TermStatus = "draft" | "approved" | "deprecated";
+export type TermScope = "segment" | "chapter" | "volume" | "book" | "project";
+export type TermConstraint = "hard" | "soft";
+
+export type GlossaryTerm = {
+  id: string;
+  project_id: string;
+  source: string;
+  target: string;
+  aliases: string[];
+  scope: TermScope;
+  status: TermStatus;
+  constraint_kind: TermConstraint;
+  notes: string | null;
+};
+
+export type GlossaryTermDraft = {
+  source: string;
+  target: string;
+  constraint_kind?: TermConstraint;
+};

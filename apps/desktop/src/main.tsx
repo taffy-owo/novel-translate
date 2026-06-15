@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import { AppLayout } from "./pages/AppLayout";
 import { ChapterWorkspacePage } from "./pages/ChapterWorkspacePage";
+import { GlossaryPage } from "./pages/GlossaryPage";
 import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { ProjectListPage } from "./pages/ProjectListPage";
 
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
       {
         path: "chapters/:chapterId",
         element: <ChapterWorkspacePage />
+      },
+      {
+        path: "projects/:projectId/glossary",
+        element: <GlossaryPage />
       }
     ]
   }
