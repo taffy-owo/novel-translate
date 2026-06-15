@@ -1,0 +1,38 @@
+[project]
+name = "novel-translate"
+version = "0.1.0"
+description = "Backend service for the novel translation workspace."
+requires-python = ">=3.11"
+dependencies = [
+    "alembic",
+    "arq",
+    "asyncpg",
+    "fastapi",
+    "pgvector",
+    "pydantic>=2",
+    "pydantic-settings",
+    "redis>=5",
+    "sqlalchemy[asyncio]>=2.0",
+    "uvicorn[standard]",
+]
+
+[dependency-groups]
+dev = [
+    "httpx",
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/novel_translate"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
