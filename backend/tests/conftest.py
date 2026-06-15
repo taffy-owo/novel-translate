@@ -4,7 +4,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from novel_translate.api.deps import get_session
@@ -46,11 +46,11 @@ async def _ensure_test_database() -> None:
 
 
 @pytest_asyncio.fixture
-async def db_session() -> AsyncIterator[AsyncSession]:
+async def db_engine() -> AsyncIterator[AsyncEngine]:
     # Contract: each test starts against an empty schema in its own NullPool engine.
     # Isolation is by TRUNCATE-before-test, never DROP TABLE — DROP needs an ACCESS
-    # EXCLUSIVE lock that deadlocks against the request session's still-open connection,
-    # and that lock wait was the silent suite hang. create_all is idempotent (checkfirst),
+    # EXCLUSIVE lock that deadlocks against any still-open request/worker connection,
+    # and that lock wait was a silent suite hang. create_all is idempotent (checkfirst),
     # so it only builds the schema the first time against a fresh database.
     await _ensure_test_database()
     engine = create_async_engine(_test_database_url(), poolclass=NullPool)
@@ -59,12 +59,25 @@ async def db_session() -> AsyncIterator[AsyncSession]:
         await connection.execute(
             text("TRUNCATE TABLE segments, chapters, projects RESTART IDENTITY CASCADE")
         )
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
     try:
-        async with session_factory() as session:
-            yield session
+        yield engine
     finally:
         await engine.dispose()
+
+
+@pytest_asyncio.fixture
+def session_factory(db_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    # Exposed so worker-task tests can build their own sessions on the same test engine
+    # (the worker runs outside any request, with its own session per job).
+    return async_sessionmaker(db_engine, expire_on_commit=False)
+
+
+@pytest_asyncio.fixture
+async def db_session(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncIterator[AsyncSession]:
+    async with session_factory() as session:
+        yield session
 
 
 @pytest_asyncio.fixture
