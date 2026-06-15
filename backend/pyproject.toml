@@ -5,9 +5,11 @@ description = "Backend service for the novel translation workspace."
 requires-python = ">=3.11"
 dependencies = [
     "alembic",
+    "anthropic",
     "arq",
     "asyncpg",
     "fastapi",
+    "openai",
     "pgvector",
     "pydantic>=2",
     "pydantic-settings",
@@ -21,6 +23,7 @@ dev = [
     "httpx",
     "pytest",
     "pytest-asyncio",
+    "respx",
     "ruff",
 ]
 
