@@ -1,9 +1,8 @@
 from typing import Any
 from uuid import UUID
 
-from novel_translate.modules.projects.models import Chapter, Project, Segment, SegmentTranslationStatus
-from novel_translate.modules.providers.registry import get_provider
-from novel_translate.modules.translation.request import build_translate_request
+from novel_translate.modules.projects.models import Segment
+from novel_translate.modules.translation.run import run_segment_translation
 
 
 async def translate_segment(ctx: dict[str, Any], segment_id: str) -> None:
@@ -17,33 +16,7 @@ async def translate_segment(ctx: dict[str, Any], segment_id: str) -> None:
     session_factory = ctx["session_factory"]
     async with session_factory() as session:
         segment = await session.get(Segment, UUID(segment_id))
-        if segment is None or segment.status != SegmentTranslationStatus.pending:
+        if segment is None:
             return
 
-        segment.status = SegmentTranslationStatus.translating
-        await session.commit()
-
-        chapter = await session.get(Chapter, segment.chapter_id)
-        project = await session.get(Project, chapter.project_id)
-        request = await build_translate_request(session, segment, project)
-        provider_kind = (
-            project.provider_config.get("kind")
-            if isinstance(project.provider_config, dict)
-            else None
-        )
-
-        try:
-            adapter = get_provider(provider_kind)
-            rate_limiter = ctx.get("rate_limiter")
-            if rate_limiter is not None:
-                await rate_limiter.acquire()
-            result = await adapter.translate(request)
-        except Exception as exc:
-            segment.status = SegmentTranslationStatus.error
-            segment.error = str(exc)
-        else:
-            segment.target_text = result.translation
-            segment.status = SegmentTranslationStatus.done
-            segment.error = None
-
-        await session.commit()
+        await run_segment_translation(session, segment, ctx.get("rate_limiter"))

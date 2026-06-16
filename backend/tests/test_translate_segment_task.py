@@ -8,8 +8,8 @@ from novel_translate.modules.ingest.txt import import_txt_chapter
 from novel_translate.modules.projects.models import Segment, SegmentTranslationStatus
 from novel_translate.modules.projects.schemas import ProjectCreate
 from novel_translate.modules.projects.service import create_project
+from novel_translate.modules.translation import run as translation_run
 from novel_translate.modules.translation.schemas import TranslateSegmentRequest, TranslateSegmentResult
-from novel_translate.worker.tasks import translate_segment as translate_segment_module
 from novel_translate.worker.tasks.translate_segment import translate_segment
 
 
@@ -49,7 +49,7 @@ async def test_translate_segment_marks_segment_done(
 ) -> None:
     segment_id = await _seed_pending_segment(session_factory)
     monkeypatch.setattr(
-        translate_segment_module,
+        translation_run,
         "get_provider",
         lambda kind=None: _StubAdapter(translation="译文"),
     )
@@ -68,7 +68,7 @@ async def test_translate_segment_records_provider_error(
 ) -> None:
     segment_id = await _seed_pending_segment(session_factory)
     monkeypatch.setattr(
-        translate_segment_module,
+        translation_run,
         "get_provider",
         lambda kind=None: _StubAdapter(error=RuntimeError("provider down")),
     )
@@ -79,4 +79,26 @@ async def test_translate_segment_records_provider_error(
         segment = await session.get(Segment, UUID(segment_id))
         assert segment.status == SegmentTranslationStatus.error
         assert segment.error == "provider down"
+        assert segment.target_text is None
+
+
+async def test_translate_segment_records_provider_resolution_error(
+    session_factory: async_sessionmaker, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A misconfigured provider kind raises when the adapter is resolved (before any
+    # translate call). That failure must be recorded on the segment (status=error),
+    # not propagated out of the job — otherwise the segment is stranded in `translating`.
+    segment_id = await _seed_pending_segment(session_factory)
+
+    def _raise_unknown_provider(kind: str | None = None):
+        raise ValueError("Unknown provider kind: bogus")
+
+    monkeypatch.setattr(translation_run, "get_provider", _raise_unknown_provider)
+
+    await translate_segment({"session_factory": session_factory}, segment_id)
+
+    async with session_factory() as session:
+        segment = await session.get(Segment, UUID(segment_id))
+        assert segment.status == SegmentTranslationStatus.error
+        assert "Unknown provider kind" in segment.error
         assert segment.target_text is None
